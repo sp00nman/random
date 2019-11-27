@@ -8,7 +8,6 @@ dir.code <- "~/datasets/SLpediatric/R/"
 dir.rdata <- "~/datasets/SLpediatric/Rdata_object/"
 load(paste(dir.code, "prob.avana.extended.RData", sep=""))
 load(paste(dir.code, "prob.TCGA.extended.qnorm.RData", sep=""));prob0=prob
-
 dir <- "/Users/schischlikf2/datasets/DepMap/CCLE_2019_02_09/"
 
 # achilles eq avana
@@ -171,9 +170,53 @@ write.table(ccle.meta.09.19,
             row.names=FALSE)
 
 
+##### Merge dataset from Sanju Sinha and newly collected data from depmap
+ccle.sinha <- readRDS(paste(dir.code, "ccle.sinhas.10.2019.RDS", sep=""))
+
+achilles <- read.csv(paste(dir, "Achilles_gene_effect.csv", sep=""),
+                     sep=",", header=TRUE, row.names = 1)
+copynumber <- read.csv(paste(dir, "CCLE_gene_cn.csv", sep=""),
+                       sep=",", header=TRUE, row.names = 1)
+expression <- read.csv(paste(dir, "CCLE_expression.csv", sep=""),
+                       sep=",", header=TRUE, row.names = 1)
+mutations <- read.csv(paste(dir, "CCLE_mutations.csv", sep=""),
+                      sep=",", header=TRUE, stringsAsFactors = FALSE)
+meta <- read.csv(paste(dir, "sample_info.csv", sep=""),
+                 sep=",", header=TRUE, row.names = 1, stringsAsFactors = FALSE)
+
+genes.achilles <- sapply(strsplit(colnames(achilles), split="\\.\\."), head, 1)
+genes.copynumber <- sapply(strsplit(colnames(copynumber), split="\\.\\."), head, 1)
+genes.expression <- sapply(strsplit(colnames(expression), split="\\.\\."), head, 1)
+
+colnames(achilles) <- genes.achilles
+colnames(copynumber) <- genes.copynumber
+colnames(expression) <- genes.expression
+
+achilles <- t(achilles)
+copynumber <- t(copynumber)
+expression <- t(expression)
+
+ccle.sinha$achilles <- as.matrix(ccle.sinha$achilles)
+ccle.sinha$Mut <- as.matrix(ccle.sinha$Mut)
+
+info <- "Cell line datasets were mined from depmap 19Q3"
+
+depmap_19Q3 <- list(
+  meta=meta, 
+  expression=expression, 
+  copynumber=copynumber,
+  mutations=mutations,
+  mutations_matrix=ccle.sinha$Mut,
+  achilles=ccle.sinha$achilles,
+  avana=achilles,
+  drug_prism=ccle.sinha$drug,
+  drug_target_map=ccle.sinha$Target_mapping,
+  metabolites=ccle.sinha$metab,
+  info=info
+)
 
 
-
+save(depmap_19Q3, file=paste(dir, "depmap_19Q3.RData", sep=""))
 
 
 
